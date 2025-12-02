@@ -7,6 +7,8 @@ export class Button {
   private background: PIXI.Graphics;
   private label: PIXI.Text;
   private app: PIXI.Application;
+  private width: number;
+  private height: number;
 
   constructor(
     app: PIXI.Application,
@@ -17,6 +19,8 @@ export class Button {
     height: number
   ) {
     this.app = app;
+    this.width = width;
+    this.height = height;
     this.container = new PIXI.Container();
     this.container.x = x;
     this.container.y = y;
@@ -88,6 +92,11 @@ export class Button {
 
   public hide(): void {
     this.container.visible = false;
+  }
+
+  public setPosition(x: number, y: number): void {
+    this.container.x = x;
+    this.container.y = y;
   }
 
   public destroy(): void {

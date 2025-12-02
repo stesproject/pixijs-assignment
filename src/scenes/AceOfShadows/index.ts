@@ -56,6 +56,25 @@ export class AceOfShadows {
     this.cleanup();
   }
 
+  resize() {
+    // Reposition cards if they exist
+    if (this.cards.length > 0 && this.isAnimating) {
+      const centerX = this.app.screen.width / 2;
+      const centerY = this.app.screen.height * 0.5;
+
+      for (let i = 0; i < this.TOTAL_CARDS; i++) {
+        const card = this.cards[i];
+        if (card && this.initialPositions[i]) {
+          // Update initial positions for responsive layout
+          const offsetX = i / (this.TOTAL_CARDS - 1);
+          const offsetY = i / (this.TOTAL_CARDS - 1);
+          this.initialPositions[i].x = centerX + offsetX;
+          this.initialPositions[i].y = centerY + offsetY;
+        }
+      }
+    }
+  }
+
   private async init() {
     // Clear any previous content
     this.container.removeChildren();

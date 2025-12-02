@@ -23,7 +23,7 @@ export class MagicWords {
     this.container.visible = false;
   }
 
-  onresize() {}
+  resize() {}
 
   private init() {}
 }

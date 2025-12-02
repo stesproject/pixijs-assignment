@@ -7,7 +7,7 @@ import { PhoenixFlame } from "./scenes/PhoenixFlame";
 // Create the application
 const app = new PIXI.Application({
   resizeTo: window,
-  backgroundColor: 0x222222,
+  backgroundColor: 0xFFFFFF,
   antialias: true,
   autoDensity: true,
   resolution: window.devicePixelRatio || 1,
@@ -17,22 +17,19 @@ const app = new PIXI.Application({
 document.body.appendChild(app.view as HTMLCanvasElement);
 
 // Create the main menu buttons
-let yPos = 100;
-let button1 = new Button(app, "Ace of Shadows", 200, yPos, 200, 50);
+let button1 = new Button(app, "Ace of Shadows", 0, 0, 200, 50);
 button1.onclick = () => {
   hideMainMenu();
   scene1.show();
   backButton.show();
 };
-yPos += 100;
-let button2 = new Button(app, "Magic Words", 200, yPos, 200, 50);
+let button2 = new Button(app, "Magic Words", 0, 0, 200, 50);
 button2.onclick = () => {
   hideMainMenu();
   scene2.show();
   backButton.show();
 };
-yPos += 100;
-let button3 = new Button(app, "Phoenix Flame", 200, yPos, 200, 50);
+let button3 = new Button(app, "Phoenix Flame", 0, 0, 200, 50);
 button3.onclick = () => {
   hideMainMenu();
   scene3.show();
@@ -47,6 +44,28 @@ backButton.onclick = () => {
   showMainMenu();
 };
 backButton.hide();
+
+// Function to update positions on resize
+const updateButtonPositions = () => {
+  const centerX = app.screen.width / 2;
+  const startY = app.screen.height / 2 - 100;
+  
+  button1.setPosition(centerX - 100, startY);
+  button2.setPosition(centerX - 100, startY + 100);
+  button3.setPosition(centerX - 100, startY + 200);
+  backButton.setPosition(20, 30);
+};
+
+// Initial positioning
+updateButtonPositions();
+
+// Add resize listener
+window.addEventListener('resize', () => {
+  updateButtonPositions();
+  scene1.resize();
+  scene2.resize();
+  scene3.resize();
+});
 
 // Helper functions for the main menu
 let showMainMenu = () => {

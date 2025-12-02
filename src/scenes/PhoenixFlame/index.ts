@@ -23,7 +23,7 @@ export class PhoenixFlame {
     this.container.visible = false;
   }
 
-  onresize() {}
+  resize() {}
 
   private init() {}
 }
