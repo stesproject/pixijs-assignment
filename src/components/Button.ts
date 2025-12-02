@@ -1,12 +1,32 @@
 import * as PIXI from "pixi.js";
 
+// Style constants
+const BUTTON_COLORS = {
+  NORMAL: 0x4a90e2,
+  HOVER: 0xdddddd,
+  DEFAULT_TINT: 0xffffff,
+  TEXT: 0xffffff,
+} as const;
+
+const BUTTON_STYLES = {
+  BORDER_RADIUS: 8,
+  FONT_SIZE: 20,
+  FONT_FAMILY: "Arial",
+} as const;
+
+const INTERACTION_STATES = {
+  PRESSED_ALPHA: 0.8,
+  PRESSED_SCALE: 0.95,
+  NORMAL_ALPHA: 1,
+  NORMAL_SCALE: 1,
+} as const;
+
 export class Button {
   public container: PIXI.Container;
   public onclick: () => void = () => {};
 
   private background: PIXI.Graphics;
   private label: PIXI.Text;
-  private app: PIXI.Application;
   private width: number;
   private height: number;
 
@@ -18,7 +38,6 @@ export class Button {
     width: number,
     height: number
   ) {
-    this.app = app;
     this.width = width;
     this.height = height;
     this.container = new PIXI.Container();
@@ -27,13 +46,13 @@ export class Button {
 
     // Create background
     this.background = new PIXI.Graphics();
-    this.drawBackground(0x4a90e2, width, height);
+    this.drawBackground(BUTTON_COLORS.NORMAL, width, height);
 
     // Create label
     this.label = new PIXI.Text(text, {
-      fontSize: 20,
-      fill: 0xffffff,
-      fontFamily: "Arial",
+      fontSize: BUTTON_STYLES.FONT_SIZE,
+      fill: BUTTON_COLORS.TEXT,
+      fontFamily: BUTTON_STYLES.FONT_FAMILY,
       align: "center",
     });
     this.label.anchor.set(0.5);
@@ -48,11 +67,11 @@ export class Button {
     this.container.eventMode = "static";
     this.container.cursor = "pointer";
 
-    // Add event listeners
-    this.container.on("pointerdown", this.onPointerDown.bind(this));
-    this.container.on("pointerup", this.onPointerUp.bind(this));
-    this.container.on("pointerover", this.onPointerOver.bind(this));
-    this.container.on("pointerout", this.onPointerOut.bind(this));
+    // Add event listeners with arrow functions to avoid binding
+    this.container.on("pointerdown", this.onPointerDown);
+    this.container.on("pointerup", this.onPointerUp);
+    this.container.on("pointerover", this.onPointerOver);
+    this.container.on("pointerout", this.onPointerOut);
 
     // Add to stage
     app.stage.addChild(this.container);
@@ -61,30 +80,30 @@ export class Button {
   private drawBackground(color: number, width: number, height: number): void {
     this.background.clear();
     this.background.beginFill(color);
-    this.background.drawRoundedRect(0, 0, width, height, 8);
+    this.background.drawRoundedRect(0, 0, width, height, BUTTON_STYLES.BORDER_RADIUS);
     this.background.endFill();
   }
 
-  private onPointerDown(): void {
-    this.background.alpha = 0.8;
-    this.container.scale.set(0.95);
-  }
+  private onPointerDown = (): void => {
+    this.background.alpha = INTERACTION_STATES.PRESSED_ALPHA;
+    this.container.scale.set(INTERACTION_STATES.PRESSED_SCALE);
+  };
 
-  private onPointerUp(): void {
-    this.background.alpha = 1;
-    this.container.scale.set(1);
+  private onPointerUp = (): void => {
+    this.background.alpha = INTERACTION_STATES.NORMAL_ALPHA;
+    this.container.scale.set(INTERACTION_STATES.NORMAL_SCALE);
     this.onclick();
-  }
+  };
 
-  private onPointerOver(): void {
-    this.background.tint = 0xdddddd;
-  }
+  private onPointerOver = (): void => {
+    this.background.tint = BUTTON_COLORS.HOVER;
+  };
 
-  private onPointerOut(): void {
-    this.background.tint = 0xffffff;
-    this.background.alpha = 1;
-    this.container.scale.set(1);
-  }
+  private onPointerOut = (): void => {
+    this.background.tint = BUTTON_COLORS.DEFAULT_TINT;
+    this.background.alpha = INTERACTION_STATES.NORMAL_ALPHA;
+    this.container.scale.set(INTERACTION_STATES.NORMAL_SCALE);
+  };
 
   public show(): void {
     this.container.visible = true;

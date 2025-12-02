@@ -4,10 +4,34 @@ import { AceOfShadows } from "./scenes/AceOfShadows";
 import { MagicWords } from "./scenes/MagicWords";
 import { PhoenixFlame } from "./scenes/PhoenixFlame";
 
+// Constants
+const BUTTON_CONFIG = {
+  WIDTH: 200,
+  HEIGHT: 50,
+  SPACING: 100,
+  OFFSET_Y: 100,
+} as const;
+
+const BACK_BUTTON_CONFIG = {
+  WIDTH: 40,
+  HEIGHT: 40,
+  X: 20,
+  Y: 30,
+} as const;
+
+const FPS_CONFIG = {
+  UPDATE_INTERVAL: 1.0,
+  FONT_SIZE: 14,
+  PADDING_X: 5,
+  PADDING_Y: 3,
+} as const;
+
+const MS_TO_SECONDS = 1000;
+
 // Create the application
 const app = new PIXI.Application({
   resizeTo: window,
-  backgroundColor: 0xFFFFFF,
+  backgroundColor: 0xffffff,
   antialias: true,
   autoDensity: true,
   resolution: window.devicePixelRatio || 1,
@@ -16,96 +40,108 @@ const app = new PIXI.Application({
 // Add the view to the DOM
 document.body.appendChild(app.view as HTMLCanvasElement);
 
-// Create the main menu buttons
-let button1 = new Button(app, "Ace of Shadows", 0, 0, 200, 50);
-button1.onclick = () => {
-  hideMainMenu();
-  scene1.show();
-  backButton.show();
+// Initialize the scenes
+const scenes = {
+  aceOfShadows: new AceOfShadows(app),
+  magicWords: new MagicWords(app),
+  phoenixFlame: new PhoenixFlame(app),
 };
-let button2 = new Button(app, "Magic Words", 0, 0, 200, 50);
-button2.onclick = () => {
-  hideMainMenu();
-  scene2.show();
-  backButton.show();
+
+// Helper functions for the main menu
+const menuButtons: Button[] = [];
+
+const showMainMenu = (): void => {
+  menuButtons.forEach((button) => button.show());
 };
-let button3 = new Button(app, "Phoenix Flame", 0, 0, 200, 50);
-button3.onclick = () => {
-  hideMainMenu();
-  scene3.show();
-  backButton.show();
+
+const hideMainMenu = (): void => {
+  menuButtons.forEach((button) => button.hide());
 };
-let backButton = new Button(app, "<", 20, 30, 40, 40);
+
+const hideAllScenes = (): void => {
+  Object.values(scenes).forEach((scene) => scene.hide());
+};
+
+// Create back button
+const backButton = new Button(
+  app,
+  "<",
+  BACK_BUTTON_CONFIG.X,
+  BACK_BUTTON_CONFIG.Y,
+  BACK_BUTTON_CONFIG.WIDTH,
+  BACK_BUTTON_CONFIG.HEIGHT
+);
 backButton.onclick = () => {
-  scene1.hide();
-  scene2.hide();
-  scene3.hide();
+  hideAllScenes();
   backButton.hide();
   showMainMenu();
 };
 backButton.hide();
 
+// Create menu buttons
+const createMenuButton = (
+  text: string,
+  scene: AceOfShadows | MagicWords | PhoenixFlame
+): Button => {
+  const button = new Button(app, text, 0, 0, BUTTON_CONFIG.WIDTH, BUTTON_CONFIG.HEIGHT);
+  button.onclick = () => {
+    hideMainMenu();
+    scene.show();
+    backButton.show();
+  };
+  menuButtons.push(button);
+  return button;
+};
+
+const button1 = createMenuButton("Ace of Shadows", scenes.aceOfShadows);
+const button2 = createMenuButton("Magic Words", scenes.magicWords);
+const button3 = createMenuButton("Phoenix Flame", scenes.phoenixFlame);
+
 // Function to update positions on resize
-const updateButtonPositions = () => {
+const updateButtonPositions = (): void => {
   const centerX = app.screen.width / 2;
-  const startY = app.screen.height / 2 - 100;
-  
-  button1.setPosition(centerX - 100, startY);
-  button2.setPosition(centerX - 100, startY + 100);
-  button3.setPosition(centerX - 100, startY + 200);
-  backButton.setPosition(20, 30);
+  const startY = app.screen.height / 2 - BUTTON_CONFIG.OFFSET_Y;
+
+  button1.setPosition(centerX - BUTTON_CONFIG.WIDTH / 2, startY);
+  button2.setPosition(centerX - BUTTON_CONFIG.WIDTH / 2, startY + BUTTON_CONFIG.SPACING);
+  button3.setPosition(centerX - BUTTON_CONFIG.WIDTH / 2, startY + BUTTON_CONFIG.SPACING * 2);
+  backButton.setPosition(BACK_BUTTON_CONFIG.X, BACK_BUTTON_CONFIG.Y);
 };
 
 // Initial positioning
 updateButtonPositions();
 
 // Add resize listener
-window.addEventListener('resize', () => {
+window.addEventListener("resize", () => {
   updateButtonPositions();
-  scene1.resize();
-  scene2.resize();
-  scene3.resize();
+  Object.values(scenes).forEach((scene) => scene.resize());
 });
 
-// Helper functions for the main menu
-let showMainMenu = () => {
-  button1.show();
-  button2.show();
-  button3.show();
-};
-let hideMainMenu = () => {
-  button1.hide();
-  button2.hide();
-  button3.hide();
-};
-
-// Initialize the scenes
-let scene1 = new AceOfShadows(app);
-let scene2 = new MagicWords(app);
-let scene3 = new PhoenixFlame(app);
-
-// Show the fps text
-let fpsText = new PIXI.Text("FPS: 60", {
+// Create FPS display
+const fpsText = new PIXI.Text("FPS: 60", {
   fontFamily: "Courier",
-  fontSize: 14,
-  fill: 0xffffff,
+  fontSize: FPS_CONFIG.FONT_SIZE,
+  fill: 0x000000,
   align: "center",
 });
-fpsText.x = 5;
-fpsText.y = 3;
+fpsText.x = FPS_CONFIG.PADDING_X;
+fpsText.y = FPS_CONFIG.PADDING_Y;
 app.stage.addChild(fpsText);
 
 // Main update function
-let timer = 0;
+let fpsTimer = 0;
+
 app.ticker.add(() => {
-  scene1.update(app.ticker.elapsedMS / 1000);
-  scene2.update(app.ticker.elapsedMS / 1000);
-  scene3.update(app.ticker.elapsedMS / 1000);
-  timer += app.ticker.elapsedMS / 1000;
-  // Avoid updating the fps text every frame
-  if (timer >= 1.0) {
-    fpsText.text = "FPS: " + app.ticker.FPS.toFixed();
+  const deltaTime = app.ticker.elapsedMS / MS_TO_SECONDS;
+
+  // Update all scenes
+  Object.values(scenes).forEach((scene) => scene.update(deltaTime));
+
+  // Update FPS display periodically to avoid performance impact
+  fpsTimer += deltaTime;
+  if (fpsTimer >= FPS_CONFIG.UPDATE_INTERVAL) {
+    fpsText.text = `FPS: ${app.ticker.FPS.toFixed()}`;
     fpsText.updateText(true);
-    timer = 0;
+    fpsTimer = 0;
   }
 });
