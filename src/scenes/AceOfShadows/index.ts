@@ -14,7 +14,6 @@ interface CardPosition {
 export class AceOfShadows {
   private app: PIXI.Application;
   private container: PIXI.Container;
-  private ticker: PIXI.Ticker | null = null;
   private cards: PIXI.Sprite[] = [];
   private isAnimating: boolean = false;
 
@@ -41,7 +40,9 @@ export class AceOfShadows {
     this.app.stage.addChild(this.container);
   }
 
-  update(_dt: number) {
+  update(dt: number): void {
+    if (!this.container.visible || !this.isAnimating) return;
+    this.animate(dt * 1000); // Convert seconds to milliseconds
   }
 
   async show() {
@@ -53,32 +54,14 @@ export class AceOfShadows {
 
   hide() {
     this.container.visible = false;
-    this.cleanup();
+    this.isAnimating = false;
   }
 
-  resize() {
-    // Reposition cards if they exist
-    if (this.cards.length > 0 && this.isAnimating) {
-      const centerX = this.app.screen.width / 2;
-      const centerY = this.app.screen.height * 0.5;
-
-      for (let i = 0; i < this.TOTAL_CARDS; i++) {
-        const card = this.cards[i];
-        if (card && this.initialPositions[i]) {
-          // Update initial positions for responsive layout
-          const offsetX = i / (this.TOTAL_CARDS - 1);
-          const offsetY = i / (this.TOTAL_CARDS - 1);
-          this.initialPositions[i].x = centerX + offsetX;
-          this.initialPositions[i].y = centerY + offsetY;
-        }
-      }
-    }
-  }
+  resize() {}
 
   private async init() {
     // Clear any previous content
     this.container.removeChildren();
-    this.cleanup();
 
     // Reset animation state
     this.currentCardIndex = this.TOTAL_CARDS - 1;
@@ -102,21 +85,6 @@ export class AceOfShadows {
 
     // Initialize cards in stacked position
     this.initCards();
-
-    // Start animation ticker
-    this.ticker = new PIXI.Ticker();
-    this.ticker.add(this.animate, this);
-    this.ticker.start();
-  }
-
-  private cleanup() {
-    if (this.ticker) {
-      this.ticker.stop();
-      this.ticker.destroy();
-      this.ticker = null;
-    }
-
-    this.isAnimating = false;
   }
 
   private shuffleArray<T>(array: T[]): T[] {
@@ -129,10 +97,12 @@ export class AceOfShadows {
 
   private generateCards(sheet: PIXI.Texture) {
     const spriteIndices = Array.from({ length: this.CARDS_TILES }, (_, i) => i);
-    
+
     // Triple the array and take only what we need for totalCards
     const tripled = [...spriteIndices, ...spriteIndices, ...spriteIndices];
-    const validSpriteIndexes = this.shuffleArray(tripled.slice(0, this.TOTAL_CARDS));
+    const validSpriteIndexes = this.shuffleArray(
+      tripled.slice(0, this.TOTAL_CARDS)
+    );
 
     for (let i = 0; i < this.TOTAL_CARDS; i++) {
       const spriteIndex = validSpriteIndexes[i];
@@ -183,11 +153,7 @@ export class AceOfShadows {
     return a + (b - a) * t;
   }
 
-  private animate(_delta: number) {
-    if (!this.ticker) return;
-
-    const deltaMS = this.ticker.deltaMS;
-
+  private animate(deltaMS: number) {
     // Update throw timer
     this.elapsed += deltaMS;
     const throwProgress = Math.min(this.elapsed / this.THROW_DURATION, 1);
@@ -214,7 +180,8 @@ export class AceOfShadows {
       // Apply rotation adjustment based on card position in throw sequence
       const rotationAdjustment =
         this.ROTATION_ADJUSTMENT * (this.TOTAL_CARDS - this.currentCardIndex);
-      const targetRotation = targetPosition.rot + (rotationAdjustment * Math.PI) / 180;
+      const targetRotation =
+        targetPosition.rot + (rotationAdjustment * Math.PI) / 180;
 
       // Interpolate position and rotation
       card.y = this.lerp(initialPos.y, targetPosition.y, animProgress);
